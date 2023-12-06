@@ -1,39 +1,83 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import QuoteContext from '../Context/QuoteContext';
-import {getData} from '../Context/QuoteActions';
-
-
+import { getData } from '../Context/QuoteActions';
+import { FaVolumeUp, FaTwitter, FaCopy, FaQuoteRight, FaQuoteLeft } from 'react-icons/fa';
 
 const QuoteCard = () => {
+  const { quoteData, dispatch } = useContext(QuoteContext);
+  const [loading, setLoading] = useState(false);
 
-    const {quoteData , dispatch} = useContext(QuoteContext);
+  const onNewQuote = async () => {
+    setLoading(true);
+    try {
+      const data = await getData();
+      dispatch({
+        type: 'GET_QUOTE',
+        payload: data,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
- const handleFetch = async()=>{
-  const data = await getData();
-  console.log(data);
+  const speakQuote = () => {
+    let utterance = new SpeechSynthesisUtterance(`${quoteData.content} By ${quoteData.author}`);
+    speechSynthesis.speak(utterance);
+  };
 
-  dispatch({ 
-    type: "GET_QUOTE",
-    payload : data,  
-    });
- };
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(quoteData.content);
+  };
 
-useEffect  (()=>{
-    handleFetch();
-}, []
-);
+  const tweetQuote = () => {
+    let tweetUrl = `https://twitter.com/shivaniii0774?url=${quoteData.content}`;
+    window.open(tweetUrl, '_blank');
+  };
 
- if (!quoteData){
-    return <h1 className='display-5 text-center '> Loading...</h1>
- }
+  useEffect(() => {
+    onNewQuote();
+  }, []);
+
+  if (!quoteData) {
+    return (
+      <h1>
+  Loading Please Wait...
+     
+    </h1>
+    );
+  }
 
   return (
-    <div className='card p-5 m-5 w-50   '>
-      <h1 className='card-title '> {quoteData.content} </h1>
-<p className="text-secondary text-end mt-5 ">  {quoteData.author }</p>
-<button className=' btn btn-dark m-5  ' onClick={handleFetch} > Next </button>
+    <div className="quote-card">
+      <h1>
+        {' '}
+        <FaQuoteLeft className='quotes-tag' /> {quoteData.content} <FaQuoteRight className='quotes-tag tag-2' />{' '}
+      </h1>
+      <p>
+        {' '}
+        <span>__</span> {quoteData.author}
+      </p>
+
+      <div className="features">
+        <span className='functions'>
+          <button onClick={speakQuote}>
+            {' '}
+            <FaVolumeUp />
+          </button>
+          <button onClick={copyToClipboard}>
+            <FaCopy />
+          </button>
+          <button onClick={tweetQuote}>
+            {' '}
+            <FaTwitter />
+          </button>
+        </span>
+        <button onClick={onNewQuote} disabled={loading}>
+          {loading ? 'Loading...' : 'New Quote'}
+        </button>
+      </div>
     </div>
-  ) 
-}
+  );
+};
 
 export default QuoteCard;
